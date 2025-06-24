@@ -16,6 +16,23 @@ class UserService {
   async deleteUser(id: number, tenantId: number) {
     return User.destroy({ where: { id, tenantId } });
   }
+
+  async verifyToken(token: string): Promise<{ valid: boolean }> {
+    try {
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        throw new Error('JWT_SECRET is not defined');
+      }
+      if(token !== secret){
+        throw new Error('Token inválido');
+      }
+      // jwt.verify(token, secret);
+      return { valid: true };
+    } catch (error) {
+      console.error('Erro ao verificar token:', error);
+      return { valid: false };
+    }
+  }
 }
 
 export default new UserService(); 

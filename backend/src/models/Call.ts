@@ -1,5 +1,6 @@
-import { Table, Column, Model, DataType, ForeignKey } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import Tenant from './Tenant';
+import VapiToken from './VapiToken';
 
 @Table
 class Call extends Model {
@@ -28,12 +29,26 @@ class Call extends Model {
   })
   phoneNumberId!: string;
 
+  @ForeignKey(() => VapiToken)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  vapiTokenId!: number;
+
   @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
   })
   tenantId!: number;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  executed!: boolean;
 
   @Column({
     type: DataType.DATE,
@@ -54,6 +69,12 @@ class Call extends Model {
     allowNull: false,
   })
   scheduleAt!: Date;
+
+  @BelongsTo(() => VapiToken)
+  vapiToken!: VapiToken;
+
+  @BelongsTo(() => Tenant)
+  tenant!: Tenant;
 }
 
 export default Call; 

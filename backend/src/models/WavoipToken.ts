@@ -16,6 +16,12 @@ class WavoipToken extends Model {
   })
   token!: string;
 
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  name!: string;
+
   @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,

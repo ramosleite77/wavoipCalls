@@ -1,28 +1,7 @@
 import Call from '../models/Call';
-import Tenant from '../models/Tenant';
+import CallSchedulerService from './CallSchedulerService';
 
 class CallService {
-  static async createCall(tenantId: number, customerNumber: string, assistantId: string, phoneNumberId: string) {
-    const tenant = await Tenant.findByPk(tenantId);
-    if (!tenant) throw new Error('Tenant not found');
-
-    const call = await Call.create({
-      customerNumber,
-      assistantId,
-      phoneNumberId,
-      tenantId
-    });
-
-    return call;
-  }
-
-  static async listCalls(tenantId: number) {
-    const calls = await Call.findAll({
-      where: { tenantId }
-    });
-
-    return calls;
-  }
 
   async createCall(data: any, tenantId: number) {
     return Call.create({ ...data, tenantId });
@@ -38,6 +17,29 @@ class CallService {
 
   async deleteCall(id: number, tenantId: number) {
     return Call.destroy({ where: { id, tenantId } });
+  }
+
+  async listCalls(tenantId: number, limit = 20, offset = 0) {
+    const [calls, totalCalls] = await Promise.all([
+      Call.findAll({
+        where: { tenantId },
+        limit,
+        offset,
+        order: [['id', 'DESC']]
+      }),
+      Call.count({ where: { tenantId } })
+    ]);
+
+    return {
+      calls,
+      totalCalls,
+      currentPage: Math.floor(offset / limit) + 1,
+      totalPages: Math.ceil(totalCalls / limit)
+    };
+  }
+
+  async executeTestCall(id: number, tenantId: number) {
+    return CallSchedulerService.executeCallById(id, tenantId);
   }
 }
 

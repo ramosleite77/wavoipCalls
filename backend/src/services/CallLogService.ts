@@ -16,6 +16,10 @@ class CallLogService {
   async deleteCallLog(id: number, tenantId: number) {
     return CallLog.destroy({ where: { id, tenantId } });
   }
+
+  async listCallLogs(tenantId: number) {
+    return CallLog.findAll({ where: { tenantId } });
+  }
 }
 
 export default new CallLogService(); 

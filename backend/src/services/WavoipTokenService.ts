@@ -11,18 +11,34 @@ class WavoipTokenService {
   }
 
   async updateWavoipToken(id: number, data: any, tenantId: number) {
-    return WavoipToken.update(data, { where: { id, tenantId } });
+    await WavoipToken.update(data, { where: { id, tenantId } });
+    return WavoipToken.findOne({ where: { id, tenantId } });
   }
 
   async deleteWavoipToken(id: number, tenantId: number) {
     return WavoipToken.destroy({ where: { id, tenantId } });
   }
 
-  async isDeviceAvailable(token: string): Promise<boolean> {
+  async getAllWavoipTokens() {
+    return WavoipToken.findAll();
+  }
+
+  async isDeviceAvailable(token: string) {
     const url = `https://devices.wavoip.com/${token}/whatsapp/all_info`;
     const response = await axios.get(url);
-    const data: any = response.data;
-    return data.call.call_id === null;
+    const data: any = response.data.result;
+
+    // Disponível se call_id for null
+    const available = data.call && data.call.call_id === null;
+
+    // Retorna status e todos os dados relevantes
+    return {
+      available,
+      call: data.call,
+      phone: data.phone,
+      integrations: data.integrations,
+      status: data.status
+    };
   }
 }
 

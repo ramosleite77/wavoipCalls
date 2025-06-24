@@ -28,6 +28,12 @@ class CallLogController {
     await CallLogService.deleteCallLog(Number(id), Number(tenantId));
     res.sendStatus(204);
   }
+
+  async listCallLogs(req: Request, res: Response) {
+    const { tenantId } = req.query;
+    const logs = await CallLogService.listCallLogs(Number(tenantId));
+    res.json(logs);
+  }
 }
 
 export default new CallLogController(); 

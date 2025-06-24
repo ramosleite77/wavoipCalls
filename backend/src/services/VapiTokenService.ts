@@ -11,7 +11,8 @@ class VapiTokenService {
   }
 
   async updateVapiToken(id: number, data: any, tenantId: number) {
-    return VapiToken.update(data, { where: { id, tenantId } });
+    await VapiToken.update(data, { where: { id, tenantId } });
+    return VapiToken.findOne({ where: { id, tenantId } });
   }
 
   async deleteVapiToken(id: number, tenantId: number) {
@@ -36,6 +37,10 @@ class VapiTokenService {
     });
 
     return response.data;
+  }
+
+  async getAllVapiTokens() {
+    return VapiToken.findAll();
   }
 }
 

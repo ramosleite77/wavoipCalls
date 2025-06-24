@@ -1,0 +1,195 @@
+/* Fundo geral escuro */
+.wavoip-page-bg {
+  min-height: 100vh;
+  background: #181c23;
+  padding: 40px 0;
+}
+
+.wavoip-container {
+  background: #23272f;
+  border-radius: 12px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 32px 24px 32px;
+  box-shadow: 0 4px 32px 0 #00000030;
+}
+
+.wavoip-title {
+  color: #fff;
+  font-size: 2rem;
+  margin-bottom: 28px;
+  font-weight: 600;
+}
+
+.wavoip-error {
+  color: #ff5c5c;
+  background: #2a1a1a;
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.wavoip-add-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.wavoip-input {
+  background: #23272f;
+  border: 1.5px solid #353b48;
+  color: #fff;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+.wavoip-input:focus {
+  border: 1.5px solid #007bff;
+}
+
+.wavoip-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #353b48;
+  color: #fff;
+  transition: background 0.2s, color 0.2s;
+}
+.wavoip-btn-primary {
+  background: #128C7E;
+  color: #fff;
+}
+.wavoip-btn-primary:hover {
+  background: #075E54;
+}
+.wavoip-btn-edit {
+  background: #128C7E;
+  margin-right: 8px;
+}
+.wavoip-btn-edit:hover {
+  background: #075E54;
+}
+.wavoip-btn-delete {
+  background: #dc3545;
+}
+.wavoip-btn-delete:hover {
+  background: #a71d2a;
+}
+
+.wavoip-loading {
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.wavoip-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #20232a;
+  box-shadow: 0 2px 12px 0 #00000020;
+}
+
+.wavoip-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #fff;
+  font-size: 1rem;
+}
+.wavoip-table th, .wavoip-table td {
+  padding: 14px 12px;
+  text-align: left;
+}
+.wavoip-table th {
+  background: #23272f;
+  font-weight: 600;
+  border-bottom: 2px solid #353b48;
+}
+.wavoip-table tr {
+  transition: background 0.2s;
+}
+.wavoip-table tbody tr:hover {
+  background: #23272f;
+}
+.wavoip-table td {
+  border-bottom: 1px solid #353b48;
+}
+
+.wavoip-status-ok {
+  color: #4caf50;
+  font-weight: 600;
+}
+.wavoip-status-bad {
+  color: #ff5c5c;
+  font-weight: 600;
+}
+.wavoip-status-warn {
+  color: #ffb300;
+  font-weight: 500;
+}
+.wavoip-status-wait {
+  color: #b0b0b0;
+  font-style: italic;
+}
+.wavoip-available {
+  color: #4caf50;
+  font-weight: 600;
+}
+.wavoip-unavailable {
+  color: #ff5c5c;
+  font-weight: 600;
+}
+
+/* Modal */
+.wavoip-modal-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.wavoip-modal {
+  background: #23272f;
+  color: #fff;
+  border-radius: 10px;
+  padding: 32px 28px 24px 28px;
+  min-width: 340px;
+  box-shadow: 0 4px 32px 0 #00000050;
+}
+.wavoip-modal-field {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.wavoip-modal-field label {
+  margin-bottom: 6px;
+  color: #b0b0b0;
+  font-size: 0.98rem;
+}
+.wavoip-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+.wavoip-modal-warn {
+  color: #ff5c5c;
+  font-size: 0.98rem;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.wavoip-btn svg {
+  font-size: 10px !important;
+}
+
+.wavoip-table th:last-child, .wavoip-table td:last-child {
+  min-width: 100px !important;
+} 

@@ -5,30 +5,38 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "postbuild": "copy src\\config\\config.json dist\\config\\config.json",
-    "dev": "ts-node src/index.ts",
-    "dev:server": "ts-node-dev --respawn --transpile-only --ignore node_modules src/index.ts",
-    "start": "node dist/index.js"
+    "watch": "tsc -w",
+    "start": "nodemon --inspect dist/server.js",
+    "dev:server": "ts-node-dev --respawn --transpile-only --ignore node_modules src/server.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.0.3",
-    "@types/node-fetch": "^2.6.12",
-    "axios": "^1.10.0",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.2",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/sequelize": "^4.28.20",
+    "axios": "^0.21.1",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
     "express": "^5.1.0",
-    "pg": "^8.16.2",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7",
-    "sequelize-typescript": "^2.1.6",
-    "ts-node": "^10.9.2"
+    "express-async-errors": "^3.1.1",
+    "express-session": "^1.18.1",
+    "helmet": "^4.4.1",
+    "http-graceful-shutdown": "^3.1.6",
+    "pg": "^8.4.1",
+    "sequelize": "^5.22.5",
+    "sequelize-typescript": "^1.1.0"
   },
   "devDependencies": {
-    "typescript": "^4.9.5"
+    "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.7",
+    "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
+    "@types/helmet": "^4.0.0",
+    "@types/node": "^24.0.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^4.8.4"
   }
 }

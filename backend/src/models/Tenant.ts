@@ -5,8 +5,11 @@ import {
     DataType,
     BeforeCreate,
     BeforeUpdate,
+    HasMany,
   } from 'sequelize-typescript';
   import { hash } from 'bcryptjs';
+  import Call from './Call';
+  import VapiToken from './VapiToken';
   
   @Table
   class Tenant extends Model {
@@ -62,6 +65,12 @@ import {
       defaultValue: DataType.NOW,
     })
     updatedAt!: Date;
+
+    @HasMany(() => Call)
+    calls!: Call[];
+
+    @HasMany(() => VapiToken)
+    vapiTokens!: VapiToken[];
   }
   
   export default Tenant;

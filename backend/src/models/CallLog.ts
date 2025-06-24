@@ -26,7 +26,7 @@ class CallLog extends Model {
   tenantId!: number;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.TEXT,
     allowNull: false,
   })
   option!: string;

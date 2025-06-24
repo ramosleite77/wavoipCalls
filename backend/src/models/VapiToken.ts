@@ -1,5 +1,6 @@
-import { Table, Column, Model, DataType, ForeignKey } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from 'sequelize-typescript';
 import Tenant from './Tenant';
+import Call from './Call';
 
 @Table
 class VapiToken extends Model {
@@ -15,6 +16,12 @@ class VapiToken extends Model {
     allowNull: false,
   })
   token!: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  name!: string;
 
   @ForeignKey(() => Tenant)
   @Column({
@@ -36,6 +43,12 @@ class VapiToken extends Model {
     defaultValue: DataType.NOW,
   })
   updatedAt!: Date;
+
+  @BelongsTo(() => Tenant)
+  tenant!: Tenant;
+
+  @HasMany(() => Call)
+  calls!: Call[];
 }
 
 export default VapiToken; 
