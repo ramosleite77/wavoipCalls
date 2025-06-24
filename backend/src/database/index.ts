@@ -5,19 +5,34 @@ import Call from '../models/Call';
 import CallLog from '../models/CallLog';
 import WavoipToken from '../models/WavoipToken';
 import VapiToken from '../models/VapiToken';
+import Settings from '../models/Settings';
 import CallSchedulerService from '../services/CallSchedulerService';
+import SettingsService from '../services/SettingsService';
+import logger from '../utils/logger';
 const dbConfig = require("../config/database");
 
 const sequelize = new Sequelize(dbConfig);
 
 sequelize.addModels([
-  User, Tenant, Call, CallLog, WavoipToken, VapiToken
+  User, Tenant, Call, CallLog, WavoipToken, VapiToken, Settings
 ]);
 
-sequelize.authenticate().then(() => {
-  CallSchedulerService.startScheduler(1); // 10 segundos = 1/6 de minuto
+sequelize.authenticate().then(async () => {
+  const tenants = await Tenant.findAll();
+  for (const tenant of tenants) {
+    let intervalSeconds = 60;
+    try {
+      const setting = await SettingsService.getSettingByType('interval', tenant.id);
+      if (setting && setting.value && !isNaN(Number(setting.value))) {
+        intervalSeconds = Number(setting.value);
+      }
+    } catch (e) {
+      logger.warn(`Não foi possível buscar setting interval para tenant ${tenant.id}, usando padrão 60s`);
+    }
+    CallSchedulerService.startScheduler(intervalSeconds, tenant.id);
+  }
 }).catch((error) => {
-  console.error('Erro ao conectar com o banco:', error);
+  logger.error('Erro ao conectar com o banco: ' + (error instanceof Error ? error.message : String(error)));
 });
 
 export default sequelize;

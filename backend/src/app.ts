@@ -9,7 +9,9 @@ import "./database";
 const app = express();
 app.set('trust proxy',  3);
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3001"
+}));
 
 app.use(helmet());
 

@@ -175,7 +175,11 @@ const WavoipTokenPage: React.FC = () => {
                   <td>{token.name}</td>
                   <td>
                     {status[token.id] ? (
-                      <span className={status[token.id].available ? 'wavoip-status-ok' : 'wavoip-status-bad'}>
+                      <span className={
+                        status[token.id].status === 'close'
+                          ? 'wavoip-status-bad'
+                          : 'wavoip-status-ok'
+                      }>
                         {status[token.id].status || (status[token.id].available ? 'Disponível' : 'Indisponível')}
                         {status[token.id].error && <span className="wavoip-status-warn"> - {status[token.id].error}</span>}
                       </span>

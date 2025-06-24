@@ -3,7 +3,6 @@ import axios from 'axios';
 
 // Configuração da URL base do axios
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-console.log('API URL:', API_URL);
 axios.defaults.baseURL = API_URL;
 
 interface AuthContextType {
@@ -80,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    console.log('Verificando autenticação inicial...');
     validateToken();
   }, []);
 

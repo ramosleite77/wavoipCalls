@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import VapiTokenPage from './pages/VapiTokenPage';
 import WavoipTokenPage from './pages/WavoipTokenPage';
 import CallManagementPage from './pages/CallManagementPage';
+import SettingsPage from './pages/SettingsPage';
 
 const Layout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ 
@@ -98,6 +99,16 @@ const AppContent: React.FC = () => {
           <ProtectedRoute>
             <Layout>
               <CallManagementPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SettingsPage />
             </Layout>
           </ProtectedRoute>
         }

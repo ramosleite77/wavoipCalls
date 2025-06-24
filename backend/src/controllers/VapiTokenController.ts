@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import VapiTokenService from '../services/VapiTokenService';
+import logger from '../utils/logger';
 
 class VapiTokenController {
   async createVapiToken(req: Request, res: Response) {
-    console.log('Dados recebidos para criar VapiToken:', req.body);
+    logger.info('Dados recebidos para criar VapiToken: ' + JSON.stringify(req.body));
     const { tenantId, ...data } = req.body;
     const token = await VapiTokenService.createVapiToken(data, tenantId);
     res.json(token);
@@ -23,7 +24,7 @@ class VapiTokenController {
       const token = await VapiTokenService.getVapiTokenById(Number(id), tenantIdNum);
       res.json(token);
     } catch (error) {
-      console.error('Erro ao buscar token:', error);
+      logger.error('Erro ao buscar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -48,7 +49,7 @@ class VapiTokenController {
       const token = await VapiTokenService.updateVapiToken(Number(id), data, tenantIdNum);
       res.json({ message: 'Token atualizado com sucesso', token });
     } catch (error) {
-      console.error('Erro ao atualizar token:', error);
+      logger.error('Erro ao atualizar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -73,7 +74,7 @@ class VapiTokenController {
       await VapiTokenService.deleteVapiToken(Number(id), tenantIdNum);
       res.json({ message: 'Token deletado com sucesso' });
     } catch (error) {
-      console.error('Erro ao deletar token:', error);
+      logger.error('Erro ao deletar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -98,7 +99,7 @@ class VapiTokenController {
       const assistants = await VapiTokenService.listAssistants(token.token);
       res.json(assistants);
     } catch (error) {
-      console.error('Erro ao listar assistants:', error);
+      logger.error('Erro ao listar assistants: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -123,7 +124,7 @@ class VapiTokenController {
       const phoneNumbers = await VapiTokenService.listPhoneNumbers(token.token);
       res.json(phoneNumbers);
     } catch (error) {
-      console.error('Erro ao listar phone numbers:', error);
+      logger.error('Erro ao listar phone numbers: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }

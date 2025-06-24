@@ -9,8 +9,6 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
-const TENANT_ID = 1;
-
 const CallManagementPage: React.FC = () => {
   const [calls, setCalls] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -57,10 +55,10 @@ const CallManagementPage: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const callsResponse = await axios.get(`/api/calls?tenantId=${TENANT_ID}&limit=${callsPerPage}&offset=${(currentPage - 1) * callsPerPage}`);
+      const callsResponse = await axios.get(`/api/calls?tenantId=1&limit=${callsPerPage}&offset=${(currentPage - 1) * callsPerPage}`);
       setCalls(callsResponse.data.calls);
       setTotalCalls(callsResponse.data.totalCalls);
-      const logsResponse = await axios.get(`/api/call-logs?tenantId=${TENANT_ID}`);
+      const logsResponse = await axios.get(`/api/call-logs?tenantId=1`);
       setLogs(logsResponse.data);
       // Carregar VapiTokens
       const vapiResponse = await axios.get('/api/vapi-tokens');
@@ -93,9 +91,9 @@ const CallManagementPage: React.FC = () => {
   // Buscar assistants e phoneNumbers ao selecionar VapiToken
   const fetchAssistantsAndPhones = async (vapiId: string) => {
     try {
-      const assistantsRes = await axios.get(`/api/vapi-tokens/${vapiId}/assistants?tenantId=${TENANT_ID}`);
+      const assistantsRes = await axios.get(`/api/vapi-tokens/${vapiId}/assistants?tenantId=1`);
       setAssistants(assistantsRes.data);
-      const phonesRes = await axios.get(`/api/vapi-tokens/${vapiId}/phone-numbers?tenantId=${TENANT_ID}`);
+      const phonesRes = await axios.get(`/api/vapi-tokens/${vapiId}/phone-numbers?tenantId=1`);
       setPhoneNumbers(phonesRes.data);
     } catch {
       setAssistants([]);
@@ -175,7 +173,7 @@ const CallManagementPage: React.FC = () => {
       const payload = {
         ...callForm,
         vapiTokenId: selectedVapiToken,
-        tenantId: TENANT_ID
+        tenantId: 1
       };
       if (editingCall) {
         await axios.put(`/api/calls/${editingCall.id}`, payload);
@@ -191,7 +189,7 @@ const CallManagementPage: React.FC = () => {
 
   const deleteCall = async (call: any) => {
     try {
-      await axios.delete(`/api/calls/${call.id}?tenantId=${TENANT_ID}`);
+      await axios.delete(`/api/calls/${call.id}?tenantId=1`);
       fetchData();
     } catch (error) {
       setErrors({ call: 'Erro ao deletar ligação' });
@@ -207,9 +205,9 @@ const CallManagementPage: React.FC = () => {
   const saveLog = async () => {
     try {
       if (editingLog) {
-        await axios.put(`/api/call-logs/${editingLog.id}`, { ...logForm, tenantId: TENANT_ID });
+        await axios.put(`/api/call-logs/${editingLog.id}`, { ...logForm, tenantId: 1 });
       } else {
-        await axios.post('/api/call-logs', { ...logForm, tenantId: TENANT_ID });
+        await axios.post('/api/call-logs', { ...logForm, tenantId: 1 });
       }
       closeLogModal();
       fetchData();
@@ -243,7 +241,7 @@ const CallManagementPage: React.FC = () => {
   const executeTestCall = async (call: any) => {
     setErrors({});
     try {
-      await axios.post(`/api/calls/${call.id}/execute-test?tenantId=${TENANT_ID}`);
+      await axios.post(`/api/calls/${call.id}/execute-test?tenantId=1`);
       fetchData();
       alert('Chamada executada com sucesso!');
     } catch (error: any) {

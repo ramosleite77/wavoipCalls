@@ -5,6 +5,8 @@ import VapiToken from '../models/VapiToken';
 import WavoipToken from '../models/WavoipToken';
 import CallLogService from './CallLogService';
 import WavoipTokenService from './WavoipTokenService';
+import SettingsService from './SettingsService';
+import logger from '../utils/logger';
 
 interface VapiCallResponse {
   id: string;
@@ -17,10 +19,11 @@ interface VapiPhoneNumberResponse {
 }
 
 class CallSchedulerService {
+  private tenantSchedulers: Record<number, { intervalId: NodeJS.Timeout, currentInterval: number }> = {};
 
   async processScheduledCalls(): Promise<void> {
     try {
-      console.log('Iniciando processamento de chamadas agendadas...');
+      logger.info('Iniciando processamento de chamadas agendadas...');
       
       const overdueCalls = await Call.findAll({
         where: {
@@ -38,14 +41,14 @@ class CallSchedulerService {
         ]
       });
 
-      console.log(`Encontradas ${overdueCalls.length} chamadas vencidas`);
+      logger.info(`Encontradas ${overdueCalls.length} chamadas vencidas`);
 
       for (const call of overdueCalls) {
         try {
           const isValid = await this.validatePhoneNumberAndWavoipToken(call);
           
           if (!isValid) {
-            console.log(`Chamada ${call.id} não executada - validação falhou`);
+            logger.warn(`Chamada ${call.id} não executada - validação falhou`);
             continue;
           }
 
@@ -60,9 +63,9 @@ class CallSchedulerService {
           // Marcar a chamada como executada
           await call.update({ executed: true });
           
-          console.log(`Chamada ${call.id} executada com sucesso`);
+          logger.info(`Chamada ${call.id} executada com sucesso`);
         } catch (error) {
-          console.error(`Erro ao executar chamada ${call.id}:`, error);
+          logger.error(`Erro ao executar chamada ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
           
           // Salvar log do erro
           await CallLogService.createCallLog({
@@ -73,7 +76,7 @@ class CallSchedulerService {
         }
       }
     } catch (error) {
-      console.error('Erro no processamento de chamadas agendadas:', error);
+      logger.error('Erro no processamento de chamadas agendadas: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -82,7 +85,7 @@ class CallSchedulerService {
       // Buscar o token do Vapi
       const vapiToken = await VapiToken.findByPk(call.vapiTokenId);
       if (!vapiToken) {
-        console.error(`Token Vapi não encontrado para a chamada ${call.id}`);
+        logger.error(`Token Vapi não encontrado para a chamada ${call.id}`);
         return false;
       }
 
@@ -94,7 +97,7 @@ class CallSchedulerService {
       });
 
       const phoneData: VapiPhoneNumberResponse = phoneResponse.data;
-      console.log(`Phone number ${call.phoneNumberId}: ${phoneData.number}`);
+      logger.info(`Phone number ${call.phoneNumberId}: ${phoneData.number}`);
 
       const wavoipToken = await WavoipToken.findOne({
         where: {
@@ -104,22 +107,22 @@ class CallSchedulerService {
       });
 
       if (!wavoipToken) {
-        console.log(`WavoipToken não encontrado para o phone number ${phoneData.number}`);
+        logger.warn(`WavoipToken não encontrado para o phone number ${phoneData.number}`);
         return false;
       }
 
       const deviceStatus = await WavoipTokenService.isDeviceAvailable(wavoipToken.token);
       
       if (!deviceStatus.available) {
-        console.log(`Dispositivo não disponível para WavoipToken ${wavoipToken.name} - Call ID: ${deviceStatus.call?.call_id}`);
+        logger.warn(`Dispositivo não disponível para WavoipToken ${wavoipToken.name} - Call ID: ${deviceStatus.call?.call_id}`);
         return false;
       }
 
-      console.log(`WavoipToken encontrado e disponível: ${wavoipToken.name} - Token: ${wavoipToken.token}`);
+      logger.info(`WavoipToken encontrado e disponível: ${wavoipToken.name} - Token: ${wavoipToken.token}`);
 
       return true;
     } catch (error) {
-      console.error(`Erro na validação do phone number/WavoipToken para chamada ${call.id}:`, error);
+      logger.error(`Erro na validação do phone number/WavoipToken para chamada ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
   }
@@ -142,7 +145,7 @@ class CallSchedulerService {
       phoneNumberId: call.phoneNumberId
     };
 
-    console.log(payload);
+    logger.info(`Tenant ${call.tenantId} Payload da chamada: ${JSON.stringify(payload)}`);
 
     const response = await axios.post('https://api.vapi.ai/call', payload, {
       headers: {
@@ -154,15 +157,84 @@ class CallSchedulerService {
     return response.data;
   }
 
+  async startScheduler(initialIntervalSeconds: number = 60, tenantId: number): Promise<void> {
+    let currentInterval = initialIntervalSeconds;
+    // Função que executa o ciclo e verifica se precisa reiniciar
+    const runScheduler = async () => {
+      // Busca o valor mais recente da configuração
+      let intervalSeconds = 60;
+      try {
+        const setting = await SettingsService.getSettingByType('interval', tenantId);
+        if (setting && setting.value && !isNaN(Number(setting.value))) {
+          intervalSeconds = Number(setting.value);
+        }
+      } catch (e) {
+      }
 
-  startScheduler(intervalMinutes: number = 1): void {
-    console.log(`Iniciando scheduler de chamadas com intervalo de ${intervalMinutes} minutos`);
-    
-    this.processScheduledCalls();
-    
-    setInterval(() => {
-      this.processScheduledCalls();
-    }, intervalMinutes * 60 * 1000);
+      if (this.tenantSchedulers[tenantId] && intervalSeconds !== currentInterval) {
+        clearInterval(this.tenantSchedulers[tenantId].intervalId);
+        currentInterval = intervalSeconds;
+        logger.info(`Tenant ${tenantId}: Intervalo alterado para ${intervalSeconds} segundos. Reiniciando scheduler.`);
+        const intervalId = setInterval(runScheduler, intervalSeconds * 1000);
+        this.tenantSchedulers[tenantId] = { intervalId, currentInterval: intervalSeconds };
+        return;
+      }
+      await this.processScheduledCallsForTenant(tenantId);
+    };
+    if (this.tenantSchedulers[tenantId]) {
+      clearInterval(this.tenantSchedulers[tenantId].intervalId);
+    }
+    logger.info(`Tenant ${tenantId}: Iniciando scheduler com intervalo de ${currentInterval} segundos.`);
+    const intervalId = setInterval(runScheduler, currentInterval * 1000);
+    this.tenantSchedulers[tenantId] = { intervalId, currentInterval };
+    await runScheduler();
+  }
+
+  async processScheduledCallsForTenant(tenantId: number): Promise<void> {
+    try {
+      logger.info(`Processando chamadas agendadas para tenant ${tenantId}...`);
+      const overdueCalls = await Call.findAll({
+        where: {
+          scheduleAt: {
+            [Op.lte]: new Date()
+          },
+          executed: false,
+          tenantId: tenantId
+        },
+        include: [
+          {
+            model: VapiToken,
+            as: 'vapiToken',
+            required: true
+          }
+        ]
+      });
+      logger.info(`Tenant ${tenantId}: Encontradas ${overdueCalls.length} chamadas vencidas`);
+      for (const call of overdueCalls) {
+        try {
+          const isValid = await this.validatePhoneNumberAndWavoipToken(call);
+          if (!isValid) {
+            logger.warn(`Chamada ${call.id} não executada - validação falhou`);
+            continue;
+          }
+          const response = await this.executeCall(call);
+          await CallLogService.createCallLog({
+            callId: call.id,
+            option: `API Response: ${JSON.stringify(response)}`
+          }, call.tenantId);
+          await call.update({ executed: true });
+          logger.info(`Chamada ${call.id} executada com sucesso`);
+        } catch (error) {
+          logger.error(`Erro ao executar chamada ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
+          await CallLogService.createCallLog({
+            callId: call.id,
+            option: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }, call.tenantId);
+        }
+      }
+    } catch (error) {
+      logger.error(`Erro no processamento de chamadas agendadas para tenant ${tenantId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   public async executeCallById(callId: number, tenantId: number): Promise<any> {

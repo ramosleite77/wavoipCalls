@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import WavoipTokenService from '../services/WavoipTokenService';
+import logger from '../utils/logger';
 
 class WavoipTokenController {
   async createWavoipToken(req: Request, res: Response) {
@@ -15,7 +16,7 @@ class WavoipTokenController {
       const token = await WavoipTokenService.createWavoipToken(data, tenantIdNum);
       res.json({ message: 'Token criado com sucesso', token });
     } catch (error) {
-      console.error('Erro ao criar token:', error);
+      logger.error('Erro ao criar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -37,7 +38,7 @@ class WavoipTokenController {
       }
       res.json(token);
     } catch (error) {
-      console.error('Erro ao buscar token:', error);
+      logger.error('Erro ao buscar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -62,7 +63,7 @@ class WavoipTokenController {
       const token = await WavoipTokenService.updateWavoipToken(Number(id), data, tenantIdNum);
       res.json({ message: 'Token atualizado com sucesso', token });
     } catch (error) {
-      console.error('Erro ao atualizar token:', error);
+      logger.error('Erro ao atualizar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -87,7 +88,7 @@ class WavoipTokenController {
       await WavoipTokenService.deleteWavoipToken(Number(id), tenantIdNum);
       res.json({ message: 'Token deletado com sucesso' });
     } catch (error) {
-      console.error('Erro ao deletar token:', error);
+      logger.error('Erro ao deletar token: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -97,7 +98,7 @@ class WavoipTokenController {
       const tokens = await WavoipTokenService.getAllWavoipTokens();
       res.json(tokens);
     } catch (error) {
-      console.error('Erro ao listar tokens:', error);
+      logger.error('Erro ao listar tokens: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -114,6 +115,7 @@ class WavoipTokenController {
       const result = await WavoipTokenService.isDeviceAvailable(tokenValue);
       res.json(result);
     } catch (error) {
+      logger.error('Erro ao verificar disponibilidade do dispositivo: ' + (error instanceof Error ? error.message : String(error)));
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }

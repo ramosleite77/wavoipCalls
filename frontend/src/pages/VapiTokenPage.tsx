@@ -187,9 +187,11 @@ const VapiTokenPage: React.FC = () => {
               {tokens.map((token: any) => (
                 <tr key={token.id}>
                   <td>{token.name}</td>
-                  <td>
+                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>
                     {errors[`assistants_${token.id}`] ? (
                       <span className="wavoip-status-warn">{errors[`assistants_${token.id}`]}</span>
+                    ) : assistants[token.id] === undefined ? (
+                      <span className="wavoip-status-wait">Verificando...</span>
                     ) : (
                       <ul style={{ margin: 0, paddingLeft: 18 }}>
                         {assistants[token.id]?.map((assistant: any) => (
@@ -198,9 +200,11 @@ const VapiTokenPage: React.FC = () => {
                       </ul>
                     )}
                   </td>
-                  <td>
+                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>
                     {errors[`phones_${token.id}`] ? (
                       <span className="wavoip-status-warn">{errors[`phones_${token.id}`]}</span>
+                    ) : phoneNumbersByToken[token.id] === undefined ? (
+                      <span className="wavoip-status-wait">Verificando...</span>
                     ) : (
                       <ul style={{ margin: 0, paddingLeft: 18 }}>
                         {phoneNumbersByToken[token.id]?.map((number: any) => (

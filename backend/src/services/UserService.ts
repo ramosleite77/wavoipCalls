@@ -1,4 +1,5 @@
 import User from '../models/User';
+import logger from '../utils/logger';
 
 class UserService {
   async createUser(data: any, tenantId: number) {
@@ -29,7 +30,7 @@ class UserService {
       // jwt.verify(token, secret);
       return { valid: true };
     } catch (error) {
-      console.error('Erro ao verificar token:', error);
+      logger.error('Erro ao verificar token: ' + (error instanceof Error ? error.message : String(error)));
       return { valid: false };
     }
   }

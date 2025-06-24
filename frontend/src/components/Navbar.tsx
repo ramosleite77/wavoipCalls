@@ -2,10 +2,11 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import StorageIcon from '@mui/icons-material/Storage';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DescriptionIcon from '@mui/icons-material/Description';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -47,7 +48,11 @@ const Navbar: React.FC = () => {
       >
         <Toolbar disableGutters sx={{ minHeight: 64 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mr: 3 }}>
-            <WhatsAppIcon sx={{ color: '#00a884', fontSize: 32, mr: 1 }} />
+            <img
+              src="/icons/android-icon-48x48.png"
+              alt="Logo Wavoip"
+              style={{ width: 32, height: 32, marginRight: 8 }}
+            />
             <Typography 
               variant="h6" 
               component={RouterLink} 
@@ -69,7 +74,7 @@ const Navbar: React.FC = () => {
             <Button
               component={RouterLink}
               to="/vapi-tokens"
-              startIcon={<StorageIcon />}
+              startIcon={<VpnKeyIcon />}
               sx={{
                 color: isActive('/vapi-tokens') ? '#00a884' : '#8696a0',
                 bgcolor: isActive('/vapi-tokens') ? 'rgba(0,168,132,0.08)' : 'transparent',
@@ -87,7 +92,7 @@ const Navbar: React.FC = () => {
             <Button
               component={RouterLink}
               to="/wavoip-tokens"
-              startIcon={<StorageIcon />}
+              startIcon={<VpnKeyIcon />}
               sx={{
                 color: isActive('/wavoip-tokens') ? '#00a884' : '#8696a0',
                 bgcolor: isActive('/wavoip-tokens') ? 'rgba(0,168,132,0.08)' : 'transparent',
@@ -118,7 +123,25 @@ const Navbar: React.FC = () => {
                 borderRadius: 2
               }}
             >
-              Calls
+              Ligações
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/settings"
+              startIcon={<SettingsIcon />}
+              sx={{
+                color: isActive('/settings') ? '#00a884' : '#8696a0',
+                bgcolor: isActive('/settings') ? 'rgba(0,168,132,0.08)' : 'transparent',
+                '&:hover': {
+                  color: '#00a884',
+                  bgcolor: 'rgba(0,168,132,0.12)',
+                },
+                minWidth: '120px',
+                fontWeight: 500,
+                borderRadius: 2
+              }}
+            >
+              Configurações
             </Button>
           </Box>
 

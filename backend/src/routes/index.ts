@@ -5,6 +5,7 @@ import CallController from '../controllers/CallController';
 import CallLogController from '../controllers/CallLogController';
 import WavoipTokenController from '../controllers/WavoipTokenController';
 import VapiTokenController from '../controllers/VapiTokenController';
+import SettingsController from '../controllers/SettingsController';
 import AuthController from '../controllers/AuthController';
 import dotenv from 'dotenv';
 
@@ -12,7 +13,6 @@ dotenv.config();
 
 const router = Router();
 
-// Função intermediária para chamar o controlador
 const handleAsync = (fn: Function) => (req: any, res: any, next: any) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
@@ -60,6 +60,18 @@ router.delete('/vapi-tokens/:id', handleAsync(VapiTokenController.deleteVapiToke
 router.get('/vapi-tokens', handleAsync(VapiTokenController.listVapiTokens));
 router.get('/vapi-tokens/:id/assistants', handleAsync(VapiTokenController.listAssistants));
 router.get('/vapi-tokens/:id/phone-numbers', handleAsync(VapiTokenController.listPhoneNumbers));
+
+// Settings routes - Rotas específicas primeiro
+router.post('/settings', handleAsync(SettingsController.createSetting));
+router.get('/settings', handleAsync(SettingsController.listSettings));
+router.get('/settings/tenant/all', handleAsync(SettingsController.getAllSettingsByTenant));
+router.get('/settings/type/:type', handleAsync(SettingsController.getSettingByType));
+router.put('/settings/type/:type', handleAsync(SettingsController.updateSettingByType));
+router.delete('/settings/type/:type', handleAsync(SettingsController.deleteSettingByType));
+// Rotas com parâmetros dinâmicos por último
+router.get('/settings/:id', handleAsync(SettingsController.getSettingById));
+router.put('/settings/:id', handleAsync(SettingsController.updateSetting));
+router.delete('/settings/:id', handleAsync(SettingsController.deleteSetting));
 
 // Auth routes
 router.get('/auth/validate-token', AuthController.validateToken);
