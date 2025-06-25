@@ -10,6 +10,7 @@ import VapiTokenPage from './pages/VapiTokenPage';
 import WavoipTokenPage from './pages/WavoipTokenPage';
 import CallManagementPage from './pages/CallManagementPage';
 import SettingsPage from './pages/SettingsPage';
+import CurlExecutorPage from './pages/CurlExecutorPage';
 
 const Layout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ 
@@ -109,6 +110,16 @@ const AppContent: React.FC = () => {
           <ProtectedRoute>
             <Layout>
               <SettingsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/curl-executor"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <CurlExecutorPage />
             </Layout>
           </ProtectedRoute>
         }

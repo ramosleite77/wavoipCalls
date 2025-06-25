@@ -4,9 +4,9 @@ import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LogoutIcon from '@mui/icons-material/Logout';
-import DescriptionIcon from '@mui/icons-material/Description';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import DescriptionIcon from '@mui/icons-material/Description';  
 import SettingsIcon from '@mui/icons-material/Settings';
+import TerminalIcon from '@mui/icons-material/Terminal';
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -142,6 +142,24 @@ const Navbar: React.FC = () => {
               }}
             >
               Configurações
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/curl-executor"
+              startIcon={<TerminalIcon />}
+              sx={{
+                color: isActive('/curl-executor') ? '#00a884' : '#8696a0',
+                bgcolor: isActive('/curl-executor') ? 'rgba(0,168,132,0.08)' : 'transparent',
+                '&:hover': {
+                  color: '#00a884',
+                  bgcolor: 'rgba(0,168,132,0.12)',
+                },
+                minWidth: '120px',
+                fontWeight: 500,
+                borderRadius: 2
+              }}
+            >
+              Executar Curl
             </Button>
           </Box>
 

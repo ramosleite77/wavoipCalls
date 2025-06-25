@@ -7,6 +7,7 @@ import WavoipTokenController from '../controllers/WavoipTokenController';
 import VapiTokenController from '../controllers/VapiTokenController';
 import SettingsController from '../controllers/SettingsController';
 import AuthController from '../controllers/AuthController';
+import CurlExecutorController from '../controllers/CurlExecutorController';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -72,6 +73,9 @@ router.delete('/settings/type/:type', handleAsync(SettingsController.deleteSetti
 router.get('/settings/:id', handleAsync(SettingsController.getSettingById));
 router.put('/settings/:id', handleAsync(SettingsController.updateSetting));
 router.delete('/settings/:id', handleAsync(SettingsController.deleteSetting));
+
+// Curl Executor routes
+router.post('/curl-executor', handleAsync(CurlExecutorController.executeCurl));
 
 // Auth routes
 router.get('/auth/validate-token', AuthController.validateToken);

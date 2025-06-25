@@ -1,0 +1,91 @@
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: calls_postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5437:5432"
+    volumes:
+      - calls_postgres_data:/var/lib/postgresql/data
+    networks:
+      - calls_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Node.js
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: calls_backend
+    environment:
+      # Credenciais
+      NODE_ENV: production
+      TOKEN: 12345ABC
+      JWT_SECRET: 12345ABC
+      JWT_REFRESH_SECRET: 12345ABC
+      
+      # Banco de dados
+      DB_DIALECT: postgres
+      DB_PORT: 5432
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+      
+      # CORS
+      FRONTEND_URL: http://localhost:3001
+      BACKEND_URL: http://localhost
+      PROXY_PORT: 3100
+      PORT: 3100
+      
+      # Pool de conexões (valores padrão)
+      POSTGRES_POOLMAX: 50
+      POSTGRES_POOLMIN: 10
+      POSTGRES_POOLACQUIRE: 30000
+      POSTGRES_POOLIDLE: 10000
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - calls_network
+    restart: unless-stopped
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: calls_frontend
+    environment:
+      PORT: 3001
+      REACT_APP_API_URL: http://localhost:3100
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - calls_network
+    restart: unless-stopped
+
+volumes:
+  calls_postgres_data:
+
+networks:
+  calls_network:
+    driver: bridge 
