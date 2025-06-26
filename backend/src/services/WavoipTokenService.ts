@@ -23,6 +23,10 @@ class WavoipTokenService {
     return WavoipToken.findAll();
   }
 
+  async getWavoipTokensByTenant(tenantId: number) {
+    return WavoipToken.findAll({ where: { tenantId } });
+  }
+
   async isDeviceAvailable(token: string) {
     const url = `https://devices.wavoip.com/${token}/whatsapp/all_info`;
     const response = await axios.get(url);

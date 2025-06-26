@@ -47,11 +47,12 @@ router.get('/call-logs', handleAsync(CallLogController.listCallLogs));
 
 // WavoipToken routes
 router.post('/wavoip-tokens', handleAsync(WavoipTokenController.createWavoipToken));
+router.get('/wavoip-tokens/tenant/:tenantId', handleAsync(WavoipTokenController.listWavoipTokensByTenant));
+router.get('/wavoip-tokens/:token/check-availability', handleAsync(WavoipTokenController.checkDeviceAvailability));
 router.get('/wavoip-tokens/:id', handleAsync(WavoipTokenController.getWavoipTokenById));
 router.put('/wavoip-tokens/:id', handleAsync(WavoipTokenController.updateWavoipToken));
 router.delete('/wavoip-tokens/:id', handleAsync(WavoipTokenController.deleteWavoipToken));
 router.get('/wavoip-tokens', handleAsync(WavoipTokenController.listWavoipTokens));
-router.get('/wavoip-tokens/:token/check-availability', handleAsync(WavoipTokenController.checkDeviceAvailability));
 
 // VapiToken routes
 router.post('/vapi-tokens', handleAsync(VapiTokenController.createVapiToken));

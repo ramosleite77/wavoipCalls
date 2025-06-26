@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import '../css/style.css';
+import '../css/phone-input-dark.css';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ListAltIcon from '@mui/icons-material/ListAlt';
@@ -8,6 +9,8 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const CallManagementPage: React.FC = () => {
   const [calls, setCalls] = useState([]);
@@ -25,6 +28,9 @@ const CallManagementPage: React.FC = () => {
   const [selectedVapiToken, setSelectedVapiToken] = useState<string>('');
   const [assistants, setAssistants] = useState<any[]>([]);
   const [phoneNumbers, setPhoneNumbers] = useState<any[]>([]);
+
+  // WavoipTokens para validação
+  const [wavoipTokens, setWavoipTokens] = useState<any[]>([]);
 
   // Estados para criação/edição de Call
   const [showCallModal, setShowCallModal] = useState(false);
@@ -63,6 +69,9 @@ const CallManagementPage: React.FC = () => {
       // Carregar VapiTokens
       const vapiResponse = await axios.get('/api/vapi-tokens');
       setVapiTokens(vapiResponse.data);
+      // Carregar WavoipTokens
+      const wavoipResponse = await axios.get('/api/wavoip-tokens/tenant/1');
+      setWavoipTokens(wavoipResponse.data);
     } catch (error) {
       setErrors({ general: 'Erro ao carregar dados' });
     } finally {
@@ -149,6 +158,24 @@ const CallManagementPage: React.FC = () => {
     }
   }, [showCallModal, pendingDuplicate, selectedVapiToken, assistants.length, phoneNumbers.length]);
 
+  // Função para validar se o phoneNumberId existe como name em algum WavoipToken
+  const validatePhoneNumberId = (phoneNumberId: string): boolean => {
+    if (!phoneNumberId) return false;
+    
+    // Buscar o número do telefone através da API do Vapi
+    const selectedPhone = phoneNumbers.find(p => p.id === phoneNumberId);
+    if (!selectedPhone) return false;
+    
+    // Verificar se existe um WavoipToken com o name igual ao número do telefone
+    const phoneNumberWithoutPlus = selectedPhone.number.replace('+', '');
+    const hasWavoipToken = wavoipTokens.some(wt => wt.name === phoneNumberWithoutPlus);
+    
+    return hasWavoipToken;
+  };
+
+  // Validação E.164 para número do cliente
+  const isValidE164 = (number: string) => /^\+[1-9]\d{1,14}$/.test(number);
+
   // CRUD Calls
   const openCallModal = (call: any = null) => {
     setEditingCall(call);
@@ -169,6 +196,19 @@ const CallManagementPage: React.FC = () => {
       setErrors({ call: 'Selecione um VapiToken' });
       return;
     }
+
+    // Validar se o número do cliente está no formato E.164
+    if (!isValidE164(callForm.customerNumber)) {
+      setErrors({ call: 'O número do cliente deve estar no formato internacional (E.164).' });
+      return;
+    }
+
+    // Validar se o phoneNumberId existe como name em algum WavoipToken
+    if (!validatePhoneNumberId(callForm.phoneNumberId)) {
+      setErrors({ call: 'O número de telefone selecionado não possui um WavoipToken configurado. Configure um WavoipToken para este número primeiro.' });
+      return;
+    }
+
     try {
       const payload = {
         ...callForm,
@@ -356,7 +396,17 @@ const CallManagementPage: React.FC = () => {
               </div>
               <div className="wavoip-modal-field">
                 <label>Cliente:</label>
-                <input type="text" value={callForm.customerNumber} onChange={e => setCallForm(f => ({ ...f, customerNumber: e.target.value }))} className="wavoip-input" />
+                <PhoneInput
+                  country={'br'}
+                  value={callForm.customerNumber.replace('+', '')}
+                  onChange={(value: string) => setCallForm(f => ({ ...f, customerNumber: value.startsWith('+') ? value : ('+' + value) }))}
+                  inputClass="react-phone-input-2"
+                  inputStyle={{ width: '100%' }}
+                  enableSearch
+                  masks={{ br: '(..) .....-....' }}
+                  specialLabel=""
+                  dropdownClass="phone-dropdown-dark"
+                />
               </div>
               <div className="wavoip-modal-field">
                 <label>Assistente:</label>
@@ -371,10 +421,21 @@ const CallManagementPage: React.FC = () => {
                 <label>Telefone:</label>
                 <select value={callForm.phoneNumberId} onChange={e => setCallForm(f => ({ ...f, phoneNumberId: e.target.value }))} className="wavoip-input" disabled={!selectedVapiToken}>
                   <option value="">Selecione...</option>
-                  {phoneNumbers.map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.number}</option>
-                  ))}
+                  {phoneNumbers.map((p: any) => {
+                    const phoneNumberWithoutPlus = p.number.replace('+', '');
+                    const hasWavoipToken = wavoipTokens.some(wt => wt.name === phoneNumberWithoutPlus);
+                    return (
+                      <option key={p.id} value={p.id} style={{ color: hasWavoipToken ? 'inherit' : '#ff6b6b' }}>
+                        {p.number} {!hasWavoipToken && '(Sem WavoipToken)'}
+                      </option>
+                    );
+                  })}
                 </select>
+                {callForm.phoneNumberId && !validatePhoneNumberId(callForm.phoneNumberId) && (
+                  <div style={{ color: '#ff6b6b', fontSize: 12, marginTop: 4 }}>
+                    ⚠️ Este número não possui um WavoipToken configurado. Configure um WavoipToken para este número primeiro.
+                  </div>
+                )}
               </div>
               <div className="wavoip-modal-field">
                 <label>Agendar para:</label>

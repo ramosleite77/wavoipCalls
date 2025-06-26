@@ -99,28 +99,40 @@ class CallSchedulerService {
       const phoneData: VapiPhoneNumberResponse = phoneResponse.data;
       logger.info(`Phone number ${call.phoneNumberId}: ${phoneData.number}`);
 
-      const wavoipToken = await WavoipToken.findOne({
+      // Buscar todos os WavoipTokens para este número de telefone
+      const wavoipTokens = await WavoipToken.findAll({
         where: {
           name: phoneData.number.replace('+', ''),
           tenantId: call.tenantId
         }
       });
 
-      if (!wavoipToken) {
-        logger.warn(`WavoipToken não encontrado para o phone number ${phoneData.number}`);
+      if (wavoipTokens.length === 0) {
+        logger.warn(`Nenhum WavoipToken encontrado para o phone number ${phoneData.number}`);
         return false;
       }
 
-      const deviceStatus = await WavoipTokenService.isDeviceAvailable(wavoipToken.token);
-      
-      if (!deviceStatus.available) {
-        logger.warn(`Dispositivo não disponível para WavoipToken ${wavoipToken.name} - Call ID: ${deviceStatus.call?.call_id}`);
-        return false;
+      logger.info(`Encontrados ${wavoipTokens.length} WavoipTokens para o número ${phoneData.number}`);
+
+      // Testar cada token até encontrar um disponível
+      for (const wavoipToken of wavoipTokens) {
+        try {
+          const deviceStatus = await WavoipTokenService.isDeviceAvailable(wavoipToken.token);
+          
+          if (deviceStatus.available) {
+            logger.info(`WavoipToken disponível encontrado: ${wavoipToken.name} - Token: ${wavoipToken.token}`);
+            return true;
+          } else {
+            logger.warn(`WavoipToken ${wavoipToken.name} não disponível - Call ID: ${deviceStatus.call?.call_id}`);
+          }
+        } catch (error) {
+          logger.error(`Erro ao verificar disponibilidade do WavoipToken ${wavoipToken.name}: ${error instanceof Error ? error.message : String(error)}`);
+        }
       }
 
-      logger.info(`WavoipToken encontrado e disponível: ${wavoipToken.name} - Token: ${wavoipToken.token}`);
+      logger.warn(`Nenhum WavoipToken disponível encontrado para o phone number ${phoneData.number}`);
+      return false;
 
-      return true;
     } catch (error) {
       logger.error(`Erro na validação do phone number/WavoipToken para chamada ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
       return false;

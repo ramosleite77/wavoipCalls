@@ -103,6 +103,24 @@ class WavoipTokenController {
     }
   }
 
+  async listWavoipTokensByTenant(req: Request, res: Response) {
+    try {
+      const { tenantId } = req.params;
+      
+      // Validar se tenantId é um número válido
+      const tenantIdNum = Number(tenantId);
+      if (isNaN(tenantIdNum)) {
+        return res.status(400).json({ error: 'tenantId é obrigatório e deve ser um número válido' });
+      }
+      
+      const tokens = await WavoipTokenService.getWavoipTokensByTenant(tenantIdNum);
+      res.json(tokens);
+    } catch (error) {
+      logger.error('Erro ao listar tokens por tenant: ' + (error instanceof Error ? error.message : String(error)));
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
+
   async checkDeviceAvailability(req: Request, res: Response) {
     try {
       const { token } = req.params;
