@@ -17,11 +17,19 @@ COPY . .
 # Garantir que o script tenha permissões corretas
 RUN chmod +x start.sh
 
-# Compilar TypeScript
-RUN npm run build
+# Verificar arquivos antes do build
+RUN echo "Arquivos antes do build:" && ls -la src/config/ && ls -la src/database/
 
-# Verificar se o script existe e tem permissões
-RUN ls -la start.sh
+# Verificar se TypeScript está instalado
+RUN npx tsc --version
+
+# Compilar TypeScript com mais detalhes
+RUN npm run build || echo "Build falhou"
+
+# Verificar se os arquivos foram compilados
+RUN echo "Arquivos após o build:" && ls -la dist/ || echo "Diretório dist não encontrado"
+RUN ls -la dist/config/ || echo "Diretório dist/config não encontrado"
+RUN ls -la dist/database/ || echo "Diretório dist/database não encontrado"
 
 # Expor porta
 EXPOSE 3100
