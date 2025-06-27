@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Instalar netcat e dos2unix para verificar conectividade e converter arquivos
-RUN apk add --no-cache netcat-openbsd dos2unix
+# Instalar netcat para verificar conectividade
+RUN apk add --no-cache netcat-openbsd
 
 WORKDIR /app
 
@@ -14,8 +14,11 @@ RUN npm install --force
 # Copiar código fonte (incluindo start.sh)
 COPY . .
 
-# Converter start.sh para formato Unix e garantir permissões
-RUN dos2unix start.sh && chmod +x start.sh
+# Garantir que os scripts tenham permissões corretas e formato correto
+RUN chmod +x start.sh && \
+    sed -i 's/\r$//' start.sh && \
+    chmod +x start-alternative.sh && \
+    sed -i 's/\r$//' start-alternative.sh
 
 # Verificar arquivos antes do build
 RUN echo "Arquivos antes do build:" && ls -la src/config/ && ls -la src/database/
@@ -34,5 +37,5 @@ RUN ls -la dist/database/ || echo "Diretório dist/database não encontrado"
 # Expor porta
 EXPOSE 3100
 
-# Comando para iniciar a aplicação
-CMD ["sh", "./start.sh"] 
+# Comando para iniciar a aplicação (tenta start.sh, se falhar usa start-alternative.sh)
+CMD sh -c "sh ./start.sh || sh ./start-alternative.sh" 

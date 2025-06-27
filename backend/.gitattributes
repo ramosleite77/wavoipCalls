@@ -1,0 +1,16 @@
+# Garantir que arquivos shell sempre usem LF
+*.sh text eol=lf
+
+# Garantir que arquivos de configuração usem LF
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+
+# Arquivos binários não devem ser modificados
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
