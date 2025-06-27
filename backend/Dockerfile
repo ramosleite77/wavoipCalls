@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Instalar netcat para verificar conectividade
-RUN apk add --no-cache netcat-openbsd
+# Instalar netcat e dos2unix para verificar conectividade e converter arquivos
+RUN apk add --no-cache netcat-openbsd dos2unix
 
 WORKDIR /app
 
@@ -14,8 +14,8 @@ RUN npm install --force
 # Copiar código fonte (incluindo start.sh)
 COPY . .
 
-# Garantir que o script tenha permissões corretas
-RUN chmod +x start.sh
+# Converter start.sh para formato Unix e garantir permissões
+RUN dos2unix start.sh && chmod +x start.sh
 
 # Verificar arquivos antes do build
 RUN echo "Arquivos antes do build:" && ls -la src/config/ && ls -la src/database/
