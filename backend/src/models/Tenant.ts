@@ -10,6 +10,7 @@ import {
   import { hash } from 'bcryptjs';
   import Call from './Call';
   import VapiToken from './VapiToken';
+  import User from './User';
   
   @Table
   class Tenant extends Model {
@@ -71,6 +72,9 @@ import {
 
     @HasMany(() => VapiToken)
     vapiTokens!: VapiToken[];
+
+    @HasMany(() => User)
+    users!: User[];
   }
   
   export default Tenant;

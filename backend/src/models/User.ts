@@ -5,8 +5,11 @@ import {
     DataType,
     BeforeCreate,
     BeforeUpdate,
+    ForeignKey,
+    BelongsTo,
   } from 'sequelize-typescript';
   import { hash, compare } from 'bcryptjs';
+  import Tenant from './Tenant';
   
   @Table
   class User extends Model {
@@ -35,6 +38,16 @@ import {
       allowNull: false,
     })
     passwordHash!: string;
+  
+    @ForeignKey(() => Tenant)
+    @Column({
+      type: DataType.INTEGER,
+      allowNull: false,
+    })
+    tenantId!: number;
+  
+    @BelongsTo(() => Tenant)
+    tenant!: Tenant;
   
     @Column({
       type: DataType.VIRTUAL,
