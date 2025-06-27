@@ -201,3 +201,7 @@
 2025-06-27 20:55:10 [[32minfo[39m]: Tenant 1: Iniciando scheduler com intervalo de 60 segundos.
 2025-06-27 20:55:10 [[32minfo[39m]: Processando chamadas agendadas para tenant 1...
 2025-06-27 20:55:10 [[32minfo[39m]: Tenant 1: Encontradas 0 chamadas vencidas
+2025-06-27 21:00:06 [[32minfo[39m]: Servidor rodando na porta 3100
+2025-06-27 21:00:06 [[32minfo[39m]: Tenant 1: Iniciando scheduler com intervalo de 60 segundos.
+2025-06-27 21:00:06 [[32minfo[39m]: Processando chamadas agendadas para tenant 1...
+2025-06-27 21:00:06 [[32minfo[39m]: Tenant 1: Encontradas 0 chamadas vencidas
