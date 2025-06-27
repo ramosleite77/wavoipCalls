@@ -2,7 +2,7 @@
 
 echo "=== Iniciando script de inicialização ==="
 
-# Aguardar o banco de dados estar pronto
+# Aguardar o banco de dados estar pronto...
 echo "Aguardando banco de dados estar pronto..."
 while true; do
   if nc -z postgres 5432; then
