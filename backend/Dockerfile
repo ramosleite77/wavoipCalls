@@ -9,19 +9,22 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar todas as dependências (incluindo devDependencies para build)
-RUN npm ci
+RUN npm install --force
 
-# Copiar código fonte
+# Copiar código fonte (incluindo start.sh)
 COPY . .
+
+# Garantir que o script tenha permissões corretas
+RUN chmod +x start.sh
 
 # Compilar TypeScript
 RUN npm run build
 
-# Tornar o script executável
-RUN chmod +x start.sh
+# Verificar se o script existe e tem permissões
+RUN ls -la start.sh
 
 # Expor porta
 EXPOSE 3100
 
 # Comando para iniciar a aplicação
-CMD ["./start.sh"] 
+CMD ["sh", "./start.sh"] 

@@ -1,0 +1,2 @@
+2025-06-27 18:30:40 [[31merror[39m]: Erro ao conectar com o banco: relation "Tenants" does not exist
+2025-06-27 15:44:07 [[31merror[39m]: Erro ao conectar com o banco: password authentication failed for user "postgres"

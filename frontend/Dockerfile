@@ -6,10 +6,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependências
-RUN npm ci
+RUN npm install --force
 
 # Copiar código fonte
 COPY . .
+
+# Compilar TypeScript
+RUN npm run build
 
 # Expor porta
 EXPOSE 3001
