@@ -9,6 +9,8 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
@@ -57,6 +59,33 @@ const CallManagementPage: React.FC = () => {
 
   // Estado para call a ser duplicada
   const [pendingDuplicate, setPendingDuplicate] = useState<any>(null);
+
+  // Estados para mostrar/ocultar dados sensíveis
+  const [visibleAssistants, setVisibleAssistants] = useState<Record<string, boolean>>({});
+  const [visiblePhones, setVisiblePhones] = useState<Record<string, boolean>>({});
+
+  // Função para alternar visibilidade do assistente
+  const toggleAssistantVisibility = (callId: string) => {
+    setVisibleAssistants(prev => ({
+      ...prev,
+      [callId]: !prev[callId]
+    }));
+  };
+
+  // Função para alternar visibilidade do telefone
+  const togglePhoneVisibility = (callId: string) => {
+    setVisiblePhones(prev => ({
+      ...prev,
+      [callId]: !prev[callId]
+    }));
+  };
+
+  // Função para mascarar dados sensíveis
+  const maskSensitiveData = (data: string) => {
+    if (!data) return '';
+    if (data.length <= 4) return '*'.repeat(data.length);
+    return data.substring(0, 2) + '*'.repeat(data.length - 4) + data.substring(data.length - 2);
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -314,8 +343,30 @@ const CallManagementPage: React.FC = () => {
               {calls.map((call: any) => (
                 <tr key={call.id} style={{ background: call.executed ? '#1e2e1e' : '#2e2a1e' }}>
                   <td style={{ wordBreak: 'break-all', padding: '10px 8px' }}>{call.customerNumber}</td>
-                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>{call.assistantId}</td>
-                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>{call.phoneNumberId}</td>
+                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>{visibleAssistants[call.id] ? call.assistantId : maskSensitiveData(call.assistantId)}</span>
+                      <span 
+                        onClick={() => toggleAssistantVisibility(call.id)}
+                        className="wavoip-visibility-icon"
+                        title={visibleAssistants[call.id] ? 'Ocultar assistente' : 'Mostrar assistente'}
+                      >
+                        {visibleAssistants[call.id] ? <VisibilityIcon fontSize="inherit" /> : <VisibilityOffIcon fontSize="inherit" />}
+                      </span>
+                    </div>
+                  </td>
+                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>{visiblePhones[call.id] ? call.phoneNumberId : maskSensitiveData(call.phoneNumberId)}</span>
+                      <span 
+                        onClick={() => togglePhoneVisibility(call.id)}
+                        className="wavoip-visibility-icon"
+                        title={visiblePhones[call.id] ? 'Ocultar telefone' : 'Mostrar telefone'}
+                      >
+                        {visiblePhones[call.id] ? <VisibilityIcon fontSize="inherit" /> : <VisibilityOffIcon fontSize="inherit" />}
+                      </span>
+                    </div>
+                  </td>
                   <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>{call.scheduleAt ? new Date(call.scheduleAt).toLocaleString() : '-'}</td>
                   <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0', padding: '10px 8px' }}>
                     <span className={call.executed ? 'wavoip-status-ok' : 'wavoip-status-warn'}>

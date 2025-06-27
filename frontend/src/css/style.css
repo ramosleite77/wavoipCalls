@@ -81,6 +81,13 @@
 .wavoip-btn-delete:hover {
   background: #a71d2a;
 }
+.wavoip-btn-visibility {
+  background: #6c757d;
+  margin-left: 8px;
+}
+.wavoip-btn-visibility:hover {
+  background: #5a6268;
+}
 
 .wavoip-loading {
   color: #fff;
@@ -191,5 +198,19 @@
 }
 
 .wavoip-table th:last-child, .wavoip-table td:last-child {
-  min-width: 100px !important;
+  min-width: 160px !important;
+}
+
+/* Ícone de visibilidade inline */
+.wavoip-visibility-icon {
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.wavoip-visibility-icon:hover {
+  color: #007bff;
 } 

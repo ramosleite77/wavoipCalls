@@ -3,6 +3,8 @@ import axios from 'axios';
 import '../css/style.css';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const WavoipTokenPage: React.FC = () => {
   const [tokens, setTokens] = useState([]);
@@ -21,6 +23,24 @@ const WavoipTokenPage: React.FC = () => {
   // Estados para exclusão
   const [deletingToken, setDeletingToken] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Estado para mostrar/ocultar tokens
+  const [visibleTokens, setVisibleTokens] = useState<Record<string, boolean>>({});
+
+  // Função para alternar visibilidade do token
+  const toggleTokenVisibility = (tokenId: string) => {
+    setVisibleTokens(prev => ({
+      ...prev,
+      [tokenId]: !prev[tokenId]
+    }));
+  };
+
+  // Função para mascarar o token
+  const maskToken = (token: string) => {
+    if (!token) return '';
+    if (token.length <= 8) return '*'.repeat(token.length);
+    return token.substring(0, 4) + '*'.repeat(token.length - 8) + token.substring(token.length - 4);
+  };
 
   const fetchData = async () => {
     try {
@@ -162,9 +182,9 @@ const WavoipTokenPage: React.FC = () => {
             <thead>
               <tr>
                 <th>Número</th>
+                <th>Token</th>
                 <th>Status</th>
                 <th>Whatsapp</th>
-                <th>Token</th>
                 <th>Disponibilidade</th>
                 <th>Ações</th>
               </tr>
@@ -173,6 +193,18 @@ const WavoipTokenPage: React.FC = () => {
               {tokens.map((token: any) => (
                 <tr key={token.id}>
                   <td>{token.name}</td>
+                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>{visibleTokens[token.id] ? token.token : maskToken(token.token)}</span>
+                      <span 
+                        onClick={() => toggleTokenVisibility(token.id)}
+                        className="wavoip-visibility-icon"
+                        title={visibleTokens[token.id] ? 'Ocultar token' : 'Mostrar token'}
+                      >
+                        {visibleTokens[token.id] ? <VisibilityIcon fontSize="inherit" /> : <VisibilityOffIcon fontSize="inherit" />}
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     {status[token.id] ? (
                       <span className={
@@ -188,7 +220,6 @@ const WavoipTokenPage: React.FC = () => {
                     )}
                   </td>
                   <td>{status[token.id]?.phone || '-'}</td>
-                  <td style={{ maxWidth: 220, wordBreak: 'break-all', fontSize: 13, color: '#b0b0b0' }}>{token.token}</td>
                   <td>
                     {status[token.id] ? (
                       <span className={status[token.id].available ? 'wavoip-available' : 'wavoip-unavailable'}>

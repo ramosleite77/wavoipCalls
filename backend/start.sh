@@ -1,26 +1,20 @@
 #!/bin/sh
 
-echo "=== Iniciando script de inicialização ==="
-
-# Aguardar o banco de dados estar pronto...
+# Aguardar o banco de dados estar pronto
 echo "Aguardando banco de dados estar pronto..."
-while true; do
-  if nc -z postgres 5432; then
-    break
-  fi
-  echo "Tentando conectar ao PostgreSQL..."
-  sleep 2
+while ! nc -z postgres 5432; do
+  sleep 1
 done
 echo "Banco de dados está pronto!"
 
 # Executar migrações
 echo "Executando migrações..."
-npx sequelize db:migrate || echo "Erro nas migrações, continuando..."
+npm run migrate
 
-# Executar seeds
+# Executar seeds (se existirem)
 echo "Executando seeds..."
-npx sequelize db:seed:all || echo "Nenhum seed para executar ou erro no seed"
+npm run seed || echo "Nenhum seed para executar ou erro no seed"
 
 # Iniciar a aplicação
 echo "Iniciando aplicação..."
-exec node dist/server.js 
+npm run start:prod 
