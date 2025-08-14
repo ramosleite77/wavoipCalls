@@ -5,6 +5,7 @@ import Call from '../models/Call';
 import CallLog from '../models/CallLog';
 import WavoipToken from '../models/WavoipToken';
 import VapiToken from '../models/VapiToken';
+import ElevenLabToken from '../models/ElevenLabToken';
 import Settings from '../models/Settings';
 import CallSchedulerService from '../services/CallSchedulerService';
 import SettingsService from '../services/SettingsService';
@@ -14,7 +15,7 @@ const dbConfig = require("../config/database");
 const sequelize = new Sequelize(dbConfig);
 
 sequelize.addModels([
-  User, Tenant, Call, CallLog, WavoipToken, VapiToken, Settings
+  User, Tenant, Call, CallLog, WavoipToken, VapiToken, ElevenLabToken, Settings
 ]);
 
 sequelize.authenticate().then(async () => {

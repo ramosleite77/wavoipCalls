@@ -46,8 +46,39 @@ const CurlExecutorPage: React.FC = () => {
     }
   }'`;
 
+  const exampleElevenLabsCurl = `curl -X POST https://api.elevenlabs.io/v1/convai/phone-numbers \\
+     -H "xi-api-key: sk_b3d5474dc060309771893740688d96e123qewd123qewd" \\
+     -H "Content-Type: application/json" \\
+     -d '{
+  "phone_number": "+553588754197",
+  "label": "ZDG",
+  "supports_inbound": true,
+  "supports_outbound": true,
+  "provider": "sip_trunk",
+  "outbound_trunk_config": {
+    "address": "sipv2.wavoip.com",
+    "transport": "tcp",
+    "media_encryption": "allowed",
+    "credentials": {
+      "username": "K797a2g2df7a7",
+      "password": "A96d4h9d520de"
+    }
+  },
+  "inbound_trunk_config": {
+    "allowed_addresses": null,
+    "allowed_numbers": null,
+    "media_encryption": "allowed"
+  }
+}'`;
+
   const loadExample = () => {
     setCurlCommand(exampleCurl);
+    setResponse(null);
+    setError(null);
+  };
+
+  const loadElevenLabsExample = () => {
+    setCurlCommand(exampleElevenLabsCurl);
     setResponse(null);
     setError(null);
   };
@@ -176,7 +207,21 @@ const CurlExecutorPage: React.FC = () => {
               },
             }}
           >
-            Carregar Exemplo
+            Exemplo Vapi
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={loadElevenLabsExample}
+            sx={{
+              borderColor: '#ff6b35',
+              color: '#ff6b35',
+              '&:hover': {
+                borderColor: '#e55a2b',
+                color: '#e55a2b',
+              },
+            }}
+          >
+            Exemplo ElevenLabs
           </Button>
         </Box>
         

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Op } from 'sequelize';
 import Call from '../models/Call';
 import VapiToken from '../models/VapiToken';
+import ElevenLabToken from '../models/ElevenLabToken';
 import WavoipToken from '../models/WavoipToken';
 import CallLogService from './CallLogService';
 import WavoipTokenService from './WavoipTokenService';
@@ -11,6 +12,13 @@ import logger from '../utils/logger';
 interface VapiCallResponse {
   id: string;
   status: string;
+}
+
+interface ElevenLabsCallResponse {
+  success: boolean;
+  message: string;
+  conversation_id?: string;
+  sip_call_id?: string;
 }
 
 interface VapiPhoneNumberResponse {
@@ -36,7 +44,12 @@ class CallSchedulerService {
           {
             model: VapiToken,
             as: 'vapiToken',
-            required: true
+            required: false
+          },
+          {
+            model: ElevenLabToken,
+            as: 'elevenLabToken',
+            required: false
           }
         ]
       });
@@ -82,16 +95,26 @@ class CallSchedulerService {
 
   private async validatePhoneNumberAndWavoipToken(call: Call): Promise<boolean> {
     try {
-      // Buscar o token do Vapi
-      const vapiToken = await VapiToken.findByPk(call.vapiTokenId);
-      if (!vapiToken) {
-        logger.error(`Token Vapi não encontrado para a chamada ${call.id}`);
+      // Verificar se é uma chamada Vapi ou ElevenLabs
+      if (call.vapiTokenId && call.vapiToken) {
+        return await this.validateVapiCall(call);
+      } else if (call.elevenLabTokenId && call.elevenLabToken) {
+        return await this.validateElevenLabsCall(call);
+      } else {
+        logger.error(`Chamada ${call.id} não possui token válido (Vapi ou ElevenLabs)`);
         return false;
       }
+    } catch (error) {
+      logger.error(`Erro na validação para chamada ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
+  }
 
+  private async validateVapiCall(call: Call): Promise<boolean> {
+    try {
       const phoneResponse = await axios.get(`https://api.vapi.ai/phone-number/${call.phoneNumberId}`, {
         headers: {
-          'Authorization': `Bearer ${vapiToken.token}`,
+          'Authorization': `Bearer ${call.vapiToken!.token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -134,19 +157,49 @@ class CallSchedulerService {
       return false;
 
     } catch (error) {
-      logger.error(`Erro na validação do phone number/WavoipToken para chamada ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`Erro na validação do phone number/WavoipToken para chamada Vapi ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
   }
 
-  private async executeCall(call: Call): Promise<VapiCallResponse> {
+  private async validateElevenLabsCall(call: Call): Promise<boolean> {
+    try {
+      // Para ElevenLabs, vamos verificar se o agent e phone number existem
+      const phoneResponse = await axios.get(`https://api.elevenlabs.io/v1/convai/phone-numbers/${call.phoneNumberId}`, {
+        headers: {
+          'xi-api-key': call.elevenLabToken!.token,
+        }
+      });
 
-    const vapiToken = await VapiToken.findByPk(call.vapiTokenId);
-    
-    if (!vapiToken) {
-      throw new Error(`Token Vapi não encontrado para a chamada ${call.id}`);
+      logger.info(`ElevenLabs phone number ${call.phoneNumberId} validado`);
+
+      // Verificar se o agent existe
+      const agentResponse = await axios.get(`https://api.elevenlabs.io/v1/convai/agents/${call.assistantId}`, {
+        headers: {
+          'xi-api-key': call.elevenLabToken!.token,
+        }
+      });
+
+      logger.info(`ElevenLabs agent ${call.assistantId} validado`);
+
+      return true;
+    } catch (error) {
+      logger.error(`Erro na validação para chamada ElevenLabs ${call.id}: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
     }
+  }
 
+  private async executeCall(call: Call): Promise<VapiCallResponse | ElevenLabsCallResponse> {
+    if (call.vapiTokenId && call.vapiToken) {
+      return await this.executeVapiCall(call);
+    } else if (call.elevenLabTokenId && call.elevenLabToken) {
+      return await this.executeElevenLabsCall(call);
+    } else {
+      throw new Error(`Chamada ${call.id} não possui token válido (Vapi ou ElevenLabs)`);
+    }
+  }
+
+  private async executeVapiCall(call: Call): Promise<VapiCallResponse> {
     const payload = {
       customers: [
         {
@@ -157,11 +210,30 @@ class CallSchedulerService {
       phoneNumberId: call.phoneNumberId
     };
 
-    logger.info(`Tenant ${call.tenantId} Payload da chamada: ${JSON.stringify(payload)}`);
+    logger.info(`Tenant ${call.tenantId} Payload da chamada Vapi: ${JSON.stringify(payload)}`);
 
     const response = await axios.post('https://api.vapi.ai/call', payload, {
       headers: {
-        'Authorization': `Bearer ${vapiToken.token}`,
+        'Authorization': `Bearer ${call.vapiToken!.token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data;
+  }
+
+  private async executeElevenLabsCall(call: Call): Promise<ElevenLabsCallResponse> {
+    const payload = {
+      agent_id: call.assistantId,
+      agent_phone_number_id: call.phoneNumberId,
+      to_number: call.customerNumber,
+    };
+
+    logger.info(`Tenant ${call.tenantId} Payload da chamada ElevenLabs: ${JSON.stringify(payload)}`);
+
+    const response = await axios.post('https://api.elevenlabs.io/v1/convai/sip-trunk/outbound-call', payload, {
+      headers: {
+        'xi-api-key': call.elevenLabToken!.token,
         'Content-Type': 'application/json'
       }
     });
@@ -217,7 +289,12 @@ class CallSchedulerService {
           {
             model: VapiToken,
             as: 'vapiToken',
-            required: true
+            required: false
+          },
+          {
+            model: ElevenLabToken,
+            as: 'elevenLabToken',
+            required: false
           }
         ]
       });
@@ -250,7 +327,21 @@ class CallSchedulerService {
   }
 
   public async executeCallById(callId: number, tenantId: number): Promise<any> {
-    const call = await Call.findOne({ where: { id: callId, tenantId } });
+    const call = await Call.findOne({ 
+      where: { id: callId, tenantId },
+      include: [
+        {
+          model: VapiToken,
+          as: 'vapiToken',
+          required: false
+        },
+        {
+          model: ElevenLabToken,
+          as: 'elevenLabToken',
+          required: false
+        }
+      ]
+    });
     if (!call) throw new Error('Call não encontrada');
     const isValid = await this.validatePhoneNumberAndWavoipToken(call);
     if (!isValid) throw new Error('Validação de número ou WavoipToken falhou');

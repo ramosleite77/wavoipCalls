@@ -73,11 +73,11 @@ const Navbar: React.FC = () => {
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               component={RouterLink}
-              to="/vapi-tokens"
+              to="/"
               startIcon={<VpnKeyIcon />}
               sx={{
-                color: isActive('/vapi-tokens') ? '#00a884' : '#8696a0',
-                bgcolor: isActive('/vapi-tokens') ? 'rgba(0,168,132,0.08)' : 'transparent',
+                color: isActive('/') ? '#00a884' : '#8696a0',
+                bgcolor: isActive('/') ? 'rgba(0,168,132,0.08)' : 'transparent',
                 '&:hover': {
                   color: '#00a884',
                   bgcolor: 'rgba(0,168,132,0.12)',
@@ -88,6 +88,24 @@ const Navbar: React.FC = () => {
               }}
             >
               Vapi Tokens
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/elevenlab-tokens"
+              startIcon={<VpnKeyIcon />}
+              sx={{
+                color: isActive('/elevenlab-tokens') ? '#00a884' : '#8696a0',
+                bgcolor: isActive('/elevenlab-tokens') ? 'rgba(0,168,132,0.08)' : 'transparent',
+                '&:hover': {
+                  color: '#00a884',
+                  bgcolor: 'rgba(0,168,132,0.12)',
+                },
+                minWidth: '120px',
+                fontWeight: 500,
+                borderRadius: 2
+              }}
+            >
+              ElevenLabs Tokens
             </Button>
             <Button
               component={RouterLink}

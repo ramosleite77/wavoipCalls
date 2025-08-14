@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import Tenant from './Tenant';
 import VapiToken from './VapiToken';
+import ElevenLabToken from './ElevenLabToken';
 
 @Table
 class Call extends Model {
@@ -32,9 +33,16 @@ class Call extends Model {
   @ForeignKey(() => VapiToken)
   @Column({
     type: DataType.INTEGER,
-    allowNull: false,
+    allowNull: true,
   })
-  vapiTokenId!: number;
+  vapiTokenId?: number;
+
+  @ForeignKey(() => ElevenLabToken)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+  })
+  elevenLabTokenId?: number;
 
   @ForeignKey(() => Tenant)
   @Column({
@@ -71,7 +79,10 @@ class Call extends Model {
   scheduleAt!: Date;
 
   @BelongsTo(() => VapiToken)
-  vapiToken!: VapiToken;
+  vapiToken?: VapiToken;
+
+  @BelongsTo(() => ElevenLabToken)
+  elevenLabToken?: ElevenLabToken;
 
   @BelongsTo(() => Tenant)
   tenant!: Tenant;

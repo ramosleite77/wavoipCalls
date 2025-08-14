@@ -31,6 +31,12 @@ const CallManagementPage: React.FC = () => {
   const [assistants, setAssistants] = useState<any[]>([]);
   const [phoneNumbers, setPhoneNumbers] = useState<any[]>([]);
 
+  // ElevenLabToken e dependentes
+  const [elevenLabTokens, setElevenLabTokens] = useState<any[]>([]);
+  const [selectedElevenLabToken, setSelectedElevenLabToken] = useState<string>('');
+  const [elevenLabAgents, setElevenLabAgents] = useState<any[]>([]);
+  const [elevenLabPhoneNumbers, setElevenLabPhoneNumbers] = useState<any[]>([]);
+
   // WavoipTokens para validação
   const [wavoipTokens, setWavoipTokens] = useState<any[]>([]);
 
@@ -43,6 +49,9 @@ const CallManagementPage: React.FC = () => {
     phoneNumberId: '',
     scheduleAt: ''
   });
+  
+  // Estado para selecionar o tipo de token (Vapi ou ElevenLabs)
+  const [tokenType, setTokenType] = useState<'vapi' | 'elevenlabs'>('vapi');
 
   // Estados para criação/edição de Log
   const [showLogModal, setShowLogModal] = useState(false);
@@ -98,6 +107,9 @@ const CallManagementPage: React.FC = () => {
       // Carregar VapiTokens
       const vapiResponse = await axios.get('/api/vapi-tokens');
       setVapiTokens(vapiResponse.data);
+      // Carregar ElevenLabTokens
+      const elevenLabResponse = await axios.get('/api/elevenlab-tokens');
+      setElevenLabTokens(elevenLabResponse.data);
       // Carregar WavoipTokens
       const wavoipResponse = await axios.get('/api/wavoip-tokens/tenant/1');
       setWavoipTokens(wavoipResponse.data);
@@ -139,6 +151,19 @@ const CallManagementPage: React.FC = () => {
     }
   };
 
+  // Buscar agents e phoneNumbers ao selecionar ElevenLabToken
+  const fetchElevenLabAgentsAndPhones = async (elevenLabId: string) => {
+    try {
+      const agentsRes = await axios.get(`/api/elevenlab-tokens/${elevenLabId}/agents?tenantId=1`);
+      setElevenLabAgents(agentsRes.data.agents || []);
+      const phonesRes = await axios.get(`/api/elevenlab-tokens/${elevenLabId}/phone-numbers?tenantId=1`);
+      setElevenLabPhoneNumbers(phonesRes.data || []);
+    } catch {
+      setElevenLabAgents([]);
+      setElevenLabPhoneNumbers([]);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -147,19 +172,34 @@ const CallManagementPage: React.FC = () => {
   useEffect(() => {
     if (showCallModal) {
       if (editingCall) {
-        setSelectedVapiToken(editingCall.vapiTokenId || '');
+        // Determinar o tipo de token baseado no que está sendo editado
+        if (editingCall.vapiTokenId) {
+          setTokenType('vapi');
+          setSelectedVapiToken(editingCall.vapiTokenId);
+          setSelectedElevenLabToken('');
+          fetchAssistantsAndPhones(editingCall.vapiTokenId);
+        } else if (editingCall.elevenLabTokenId) {
+          setTokenType('elevenlabs');
+          setSelectedElevenLabToken(editingCall.elevenLabTokenId);
+          setSelectedVapiToken('');
+          fetchElevenLabAgentsAndPhones(editingCall.elevenLabTokenId);
+        }
+        
         setCallForm({
           customerNumber: editingCall.customerNumber,
           assistantId: editingCall.assistantId,
           phoneNumberId: editingCall.phoneNumberId,
           scheduleAt: editingCall.scheduleAt ? editingCall.scheduleAt.substring(0, 16) : ''
         });
-        if (editingCall.vapiTokenId) fetchAssistantsAndPhones(editingCall.vapiTokenId);
       } else {
         setSelectedVapiToken('');
+        setSelectedElevenLabToken('');
         setAssistants([]);
         setPhoneNumbers([]);
+        setElevenLabAgents([]);
+        setElevenLabPhoneNumbers([]);
         setCallForm({ customerNumber: '', assistantId: '', phoneNumberId: '', scheduleAt: '' });
+        setTokenType('vapi');
       }
     }
   }, [showCallModal, editingCall]);
@@ -174,32 +214,60 @@ const CallManagementPage: React.FC = () => {
     }
   }, [selectedVapiToken]);
 
+  // Atualiza selects ao trocar ElevenLabToken
+  useEffect(() => {
+    if (selectedElevenLabToken) fetchElevenLabAgentsAndPhones(selectedElevenLabToken);
+    else {
+      setElevenLabAgents([]);
+      setElevenLabPhoneNumbers([]);
+      setCallForm(f => ({ ...f, assistantId: '', phoneNumberId: '' }));
+    }
+  }, [selectedElevenLabToken]);
+
   // Efeito para preencher o formulário após carregar assistants/phones
   useEffect(() => {
-    if (showCallModal && pendingDuplicate && selectedVapiToken) {
-      setCallForm({
-        customerNumber: pendingDuplicate.customerNumber,
-        assistantId: pendingDuplicate.assistantId,
-        phoneNumberId: pendingDuplicate.phoneNumberId,
-        scheduleAt: pendingDuplicate.scheduleAt ? pendingDuplicate.scheduleAt.substring(0, 16) : ''
-      });
-      setPendingDuplicate(null);
+    if (showCallModal && pendingDuplicate) {
+      if (tokenType === 'vapi' && selectedVapiToken) {
+        setCallForm({
+          customerNumber: pendingDuplicate.customerNumber,
+          assistantId: pendingDuplicate.assistantId,
+          phoneNumberId: pendingDuplicate.phoneNumberId,
+          scheduleAt: pendingDuplicate.scheduleAt ? pendingDuplicate.scheduleAt.substring(0, 16) : ''
+        });
+        setPendingDuplicate(null);
+      } else if (tokenType === 'elevenlabs' && selectedElevenLabToken) {
+        setCallForm({
+          customerNumber: pendingDuplicate.customerNumber,
+          assistantId: pendingDuplicate.assistantId,
+          phoneNumberId: pendingDuplicate.phoneNumberId,
+          scheduleAt: pendingDuplicate.scheduleAt ? pendingDuplicate.scheduleAt.substring(0, 16) : ''
+        });
+        setPendingDuplicate(null);
+      }
     }
-  }, [showCallModal, pendingDuplicate, selectedVapiToken, assistants.length, phoneNumbers.length]);
+  }, [showCallModal, pendingDuplicate, selectedVapiToken, selectedElevenLabToken, tokenType, assistants.length, phoneNumbers.length, elevenLabAgents.length, elevenLabPhoneNumbers.length]);
 
   // Função para validar se o phoneNumberId existe como name em algum WavoipToken
   const validatePhoneNumberId = (phoneNumberId: string): boolean => {
     if (!phoneNumberId) return false;
     
-    // Buscar o número do telefone através da API do Vapi
-    const selectedPhone = phoneNumbers.find(p => p.id === phoneNumberId);
-    if (!selectedPhone) return false;
+    if (tokenType === 'vapi') {
+      // Buscar o número do telefone através da API do Vapi
+      const selectedPhone = phoneNumbers.find(p => p.id === phoneNumberId);
+      if (!selectedPhone) return false;
+      
+      // Verificar se existe um WavoipToken com o name igual ao número do telefone
+      const phoneNumberWithoutPlus = selectedPhone.number.replace('+', '');
+      const hasWavoipToken = wavoipTokens.some(wt => wt.name === phoneNumberWithoutPlus);
+      
+      return hasWavoipToken;
+    } else if (tokenType === 'elevenlabs') {
+      // Para ElevenLabs, vamos validar se o phone number existe
+      const selectedPhone = elevenLabPhoneNumbers.find(p => p.phone_number_id === phoneNumberId);
+      return !!selectedPhone;
+    }
     
-    // Verificar se existe um WavoipToken com o name igual ao número do telefone
-    const phoneNumberWithoutPlus = selectedPhone.number.replace('+', '');
-    const hasWavoipToken = wavoipTokens.some(wt => wt.name === phoneNumberWithoutPlus);
-    
-    return hasWavoipToken;
+    return false;
   };
 
   // Validação E.164 para número do cliente
@@ -216,13 +284,22 @@ const CallManagementPage: React.FC = () => {
     setEditingCall(null);
     setCallForm({ customerNumber: '', assistantId: '', phoneNumberId: '', scheduleAt: '' });
     setSelectedVapiToken('');
+    setSelectedElevenLabToken('');
     setAssistants([]);
     setPhoneNumbers([]);
+    setElevenLabAgents([]);
+    setElevenLabPhoneNumbers([]);
+    setTokenType('vapi');
   };
 
   const saveCall = async () => {
-    if (!selectedVapiToken) {
+    if (tokenType === 'vapi' && !selectedVapiToken) {
       setErrors({ call: 'Selecione um VapiToken' });
+      return;
+    }
+
+    if (tokenType === 'elevenlabs' && !selectedElevenLabToken) {
+      setErrors({ call: 'Selecione um ElevenLabToken' });
       return;
     }
 
@@ -232,18 +309,28 @@ const CallManagementPage: React.FC = () => {
       return;
     }
 
-    // Validar se o phoneNumberId existe como name em algum WavoipToken
+    // Validar se o phoneNumberId existe
     if (!validatePhoneNumberId(callForm.phoneNumberId)) {
-      setErrors({ call: 'O número de telefone selecionado não possui um WavoipToken configurado. Configure um WavoipToken para este número primeiro.' });
+      if (tokenType === 'vapi') {
+        setErrors({ call: 'O número de telefone selecionado não possui um WavoipToken configurado. Configure um WavoipToken para este número primeiro.' });
+      } else {
+        setErrors({ call: 'O número de telefone selecionado não é válido.' });
+      }
       return;
     }
 
     try {
-      const payload = {
+      const payload: any = {
         ...callForm,
-        vapiTokenId: selectedVapiToken,
         tenantId: 1
       };
+
+      if (tokenType === 'vapi') {
+        payload.vapiTokenId = selectedVapiToken;
+      } else if (tokenType === 'elevenlabs') {
+        payload.elevenLabTokenId = selectedElevenLabToken;
+      }
+
       if (editingCall) {
         await axios.put(`/api/calls/${editingCall.id}`, payload);
       } else {
@@ -302,7 +389,17 @@ const CallManagementPage: React.FC = () => {
   const duplicateCall = (call: any) => {
     setEditingCall(null); // Nova call
     setPendingDuplicate(call); // Salva dados para preencher depois
-    setSelectedVapiToken(call.vapiTokenId || '');
+    
+    if (call.vapiTokenId) {
+      setTokenType('vapi');
+      setSelectedVapiToken(call.vapiTokenId);
+      setSelectedElevenLabToken('');
+    } else if (call.elevenLabTokenId) {
+      setTokenType('elevenlabs');
+      setSelectedElevenLabToken(call.elevenLabTokenId);
+      setSelectedVapiToken('');
+    }
+    
     setShowCallModal(true);
   };
 
@@ -436,15 +533,38 @@ const CallManagementPage: React.FC = () => {
           <div className="wavoip-modal-bg">
             <div className="wavoip-modal">
               <h3>{editingCall ? 'Editar Ligação' : 'Nova Ligação'}</h3>
+              
+              {/* Seleção do tipo de token */}
               <div className="wavoip-modal-field">
-                <label>VapiToken:</label>
-                <select value={selectedVapiToken} onChange={e => setSelectedVapiToken(e.target.value)} className="wavoip-input">
-                  <option value="">Selecione...</option>
-                  {vapiTokens.map((v: any) => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
-                  ))}
+                <label>Tipo de Token:</label>
+                <select value={tokenType} onChange={e => setTokenType(e.target.value as 'vapi' | 'elevenlabs')} className="wavoip-input">
+                  <option value="vapi">Vapi Token</option>
+                  <option value="elevenlabs">ElevenLabs Token</option>
                 </select>
               </div>
+
+              {/* Seleção do token baseado no tipo */}
+              {tokenType === 'vapi' ? (
+                <div className="wavoip-modal-field">
+                  <label>VapiToken:</label>
+                  <select value={selectedVapiToken} onChange={e => setSelectedVapiToken(e.target.value)} className="wavoip-input">
+                    <option value="">Selecione...</option>
+                    {vapiTokens.map((v: any) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="wavoip-modal-field">
+                  <label>ElevenLabToken:</label>
+                  <select value={selectedElevenLabToken} onChange={e => setSelectedElevenLabToken(e.target.value)} className="wavoip-input">
+                    <option value="">Selecione...</option>
+                    {elevenLabTokens.map((v: any) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="wavoip-modal-field">
                 <label>Cliente:</label>
                 <PhoneInput
@@ -461,30 +581,58 @@ const CallManagementPage: React.FC = () => {
               </div>
               <div className="wavoip-modal-field">
                 <label>Assistente:</label>
-                <select value={callForm.assistantId} onChange={e => setCallForm(f => ({ ...f, assistantId: e.target.value }))} className="wavoip-input" disabled={!selectedVapiToken}>
+                <select 
+                  value={callForm.assistantId} 
+                  onChange={e => setCallForm(f => ({ ...f, assistantId: e.target.value }))} 
+                  className="wavoip-input" 
+                  disabled={tokenType === 'vapi' ? !selectedVapiToken : !selectedElevenLabToken}
+                >
                   <option value="">Selecione...</option>
-                  {assistants.map((a: any) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
+                  {tokenType === 'vapi' ? (
+                    assistants.map((a: any) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))
+                  ) : (
+                    elevenLabAgents.map((a: any) => (
+                      <option key={a.agent_id} value={a.agent_id}>{a.name}</option>
+                    ))
+                  )}
                 </select>
               </div>
               <div className="wavoip-modal-field">
                 <label>Telefone:</label>
-                <select value={callForm.phoneNumberId} onChange={e => setCallForm(f => ({ ...f, phoneNumberId: e.target.value }))} className="wavoip-input" disabled={!selectedVapiToken}>
+                <select 
+                  value={callForm.phoneNumberId} 
+                  onChange={e => setCallForm(f => ({ ...f, phoneNumberId: e.target.value }))} 
+                  className="wavoip-input" 
+                  disabled={tokenType === 'vapi' ? !selectedVapiToken : !selectedElevenLabToken}
+                >
                   <option value="">Selecione...</option>
-                  {phoneNumbers.map((p: any) => {
-                    const phoneNumberWithoutPlus = p.number.replace('+', '');
-                    const hasWavoipToken = wavoipTokens.some(wt => wt.name === phoneNumberWithoutPlus);
-                    return (
-                      <option key={p.id} value={p.id} style={{ color: hasWavoipToken ? 'inherit' : '#ff6b6b' }}>
-                        {p.number} {!hasWavoipToken && '(Sem WavoipToken)'}
+                  {tokenType === 'vapi' ? (
+                    phoneNumbers.map((p: any) => {
+                      const phoneNumberWithoutPlus = p.number.replace('+', '');
+                      const hasWavoipToken = wavoipTokens.some(wt => wt.name === phoneNumberWithoutPlus);
+                      return (
+                        <option key={p.id} value={p.id} style={{ color: hasWavoipToken ? 'inherit' : '#ff6b6b' }}>
+                          {p.number} {!hasWavoipToken && '(Sem WavoipToken)'}
+                        </option>
+                      );
+                    })
+                  ) : (
+                    elevenLabPhoneNumbers.map((p: any) => (
+                      <option key={p.phone_number_id} value={p.phone_number_id}>
+                        {p.phone_number}
                       </option>
-                    );
-                  })}
+                    ))
+                  )}
                 </select>
                 {callForm.phoneNumberId && !validatePhoneNumberId(callForm.phoneNumberId) && (
                   <div style={{ color: '#ff6b6b', fontSize: 12, marginTop: 4 }}>
-                    ⚠️ Este número não possui um WavoipToken configurado. Configure um WavoipToken para este número primeiro.
+                    {tokenType === 'vapi' ? (
+                      '⚠️ Este número não possui um WavoipToken configurado. Configure um WavoipToken para este número primeiro.'
+                    ) : (
+                      '⚠️ Este número de telefone não é válido.'
+                    )}
                   </div>
                 )}
               </div>

@@ -5,6 +5,7 @@ import CallController from '../controllers/CallController';
 import CallLogController from '../controllers/CallLogController';
 import WavoipTokenController from '../controllers/WavoipTokenController';
 import VapiTokenController from '../controllers/VapiTokenController';
+import ElevenLabTokenController from '../controllers/ElevenLabTokenController';
 import SettingsController from '../controllers/SettingsController';
 import AuthController from '../controllers/AuthController';
 import CurlExecutorController from '../controllers/CurlExecutorController';
@@ -62,6 +63,16 @@ router.delete('/vapi-tokens/:id', handleAsync(VapiTokenController.deleteVapiToke
 router.get('/vapi-tokens', handleAsync(VapiTokenController.listVapiTokens));
 router.get('/vapi-tokens/:id/assistants', handleAsync(VapiTokenController.listAssistants));
 router.get('/vapi-tokens/:id/phone-numbers', handleAsync(VapiTokenController.listPhoneNumbers));
+
+// ElevenLabToken routes
+router.post('/elevenlab-tokens', handleAsync(ElevenLabTokenController.createElevenLabToken));
+router.get('/elevenlab-tokens/:id', handleAsync(ElevenLabTokenController.getElevenLabTokenById));
+router.put('/elevenlab-tokens/:id', handleAsync(ElevenLabTokenController.updateElevenLabToken));
+router.delete('/elevenlab-tokens/:id', handleAsync(ElevenLabTokenController.deleteElevenLabToken));
+router.get('/elevenlab-tokens', handleAsync(ElevenLabTokenController.listElevenLabTokens));
+router.get('/elevenlab-tokens/:id/agents', handleAsync(ElevenLabTokenController.listAgents));
+router.get('/elevenlab-tokens/:id/phone-numbers', handleAsync(ElevenLabTokenController.listPhoneNumbers));
+router.post('/elevenlab-tokens/:id/outbound-call', handleAsync(ElevenLabTokenController.makeOutboundCall));
 
 // Settings routes - Rotas específicas primeiro
 router.post('/settings', handleAsync(SettingsController.createSetting));

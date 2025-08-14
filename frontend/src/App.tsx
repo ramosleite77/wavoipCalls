@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Footer from './components/Footer';
 import VapiTokenPage from './pages/VapiTokenPage';
+import ElevenLabTokenPage from './pages/ElevenLabTokenPage';
 import WavoipTokenPage from './pages/WavoipTokenPage';
 import CallManagementPage from './pages/CallManagementPage';
 import SettingsPage from './pages/SettingsPage';
@@ -80,6 +81,16 @@ const AppContent: React.FC = () => {
           <ProtectedRoute>
             <Layout>
               <VapiTokenPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/elevenlab-tokens"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ElevenLabTokenPage />
             </Layout>
           </ProtectedRoute>
         }
