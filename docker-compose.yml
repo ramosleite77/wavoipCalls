@@ -1,5 +1,28 @@
+version: "3.9"
+
 services:
-  # Banco de dados PostgreSQL
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.email=conectaconquista@gmail.com
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - web
+    restart: unless-stopped
+
   postgres:
     image: postgres:15-alpine
     container_name: calls_postgres
@@ -7,85 +30,93 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
+    # Em produção NÃO expomos a porta do banco para fora do host
+    ports: []
     volumes:
       - calls_postgres_data:/var/lib/postgresql/data
     networks:
-      - calls_network
+      - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    restart: unless-stopped
 
-  # Backend Node.js
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: calls_backend
-    environment:
-      # Credenciais
-      NODE_ENV: production
-      TOKEN: 12345ABC
-      JWT_SECRET: 12345ABC
-      JWT_REFRESH_SECRET: 12345ABC
-      
-      # Banco de dados
-      DB_DIALECT: postgres
-      DB_PORT: 5432
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
-      
-      # CORS
-      FRONTEND_URL: http://localhost:3001
-      BACKEND_URL: http://localhost
-      PROXY_PORT: 3100
-      PORT: 3100
-      
-      # Pool de conexões (valores padrão)
-      POSTGRES_POOLMAX: 50
-      POSTGRES_POOLMIN: 10
-      POSTGRES_POOLACQUIRE: 30000
-      POSTGRES_POOLIDLE: 10000
-    ports:
-      - "3100:3100"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    # Carrega as variáveis de produção (URLs, DB, segredos)
+    env_file:
+      - ./backend/.env.production
+    # Não expõe a porta publicamente; Traefik faz o roteamento
+    ports: []
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - calls_network
+      - web      # para ser alcançado pelo Traefik
+      - internal # para falar com o Postgres
+    labels:
+      - traefik.enable=true
+
+      # Redireciona HTTP -> HTTPS
+      - traefik.http.middlewares.redirecthttps.redirectscheme.scheme=https
+
+      # Roteador HTTP (porta 80) para o domínio da API
+      - traefik.http.routers.api-http.rule=Host(`wavoip.api.conectaconquista.tech`)
+      - traefik.http.routers.api-http.entrypoints=web
+      - traefik.http.routers.api-http.middlewares=redirecthttps@docker
+
+      # Roteador HTTPS (porta 443) para o domínio da API
+      - traefik.http.routers.api-https.rule=Host(`wavoip.api.conectaconquista.tech`)
+      - traefik.http.routers.api-https.entrypoints=websecure
+      - traefik.http.routers.api-https.tls.certresolver=le
+
+      # Porta interna do serviço backend (conforme app escuta)
+      - traefik.http.services.api.loadbalancer.server.port=3100
     restart: unless-stopped
 
-  # Frontend React
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: calls_frontend
-    environment:
-      PORT: 3001
-      REACT_APP_API_URL: http://localhost:3100
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    env_file:
+      - ./frontend/.env.production
+    # Não expõe a porta publicamente; Traefik faz o roteamento
+    ports: []
     depends_on:
       - backend
     networks:
-      - calls_network
+      - web
+    labels:
+      - traefik.enable=true
+
+      # Redireciona HTTP -> HTTPS
+      - traefik.http.middlewares.redirecthttps.redirectscheme.scheme=https
+
+      # Roteador HTTP (porta 80) para o domínio do front
+      - traefik.http.routers.front-http.rule=Host(`wavoip.app.conectaconquista.tech`)
+      - traefik.http.routers.front-http.entrypoints=web
+      - traefik.http.routers.front-http.middlewares=redirecthttps@docker
+
+      # Roteador HTTPS (porta 443) para o domínio do front
+      - traefik.http.routers.front-https.rule=Host(`wavoip.app.conectaconquista.tech`)
+      - traefik.http.routers.front-https.entrypoints=websecure
+      - traefik.http.routers.front-https.tls.certresolver=le
+
+      # Porta interna do serviço frontend (conforme app escuta)
+      - traefik.http.services.front.loadbalancer.server.port=3001
     restart: unless-stopped
 
 volumes:
   calls_postgres_data:
 
 networks:
-  calls_network:
-    driver: bridge 
+  web:
+    driver: bridge
+  internal:
+    driver: bridge
